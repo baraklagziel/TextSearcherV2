@@ -31,12 +31,15 @@ public class ProcessingService {
     @Autowired
     private FileReaderService fileReaderService;
 
+    ExecutorService matcherExecutor = Executors.newFixedThreadPool(CORES);
 
-    // Extracted constant for thread pool size
-    private static final int THREAD_POOL_SIZE = 1;
-    ExecutorService matcherExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-
-
+    /**
+     * Starts processing a list of file URLs asynchronously, dividing the files into parts based on the specified
+     * number of lines per part.
+     *
+     * @param fileURLs     The list of file URLs to process.
+     * @param linesPerPart The number of lines per part to divide the files into.
+     */
     // In the class where start method is
     public void start(List<String> fileURLs, int linesPerPart) {
         // Get a list of CompletableFuture<Void> for each URL
@@ -52,15 +55,27 @@ public class ProcessingService {
         });
 
         // If you need to block and wait for all to complete (though generally not recommended in async programming):
-         allDoneFuture.join();
+        allDoneFuture.join();
     }
 
 
+    /**
+     * Shuts down the executor service and waits for any pending tasks to complete.
+     * If the tasks take too long to complete, they will be forcibly terminated.
+     *
+     * @see ExecutorService#shutdown()
+     */
     public void shutdown() {
         executorService.shutdown();
         awaitThreadPoolTerminationOrShutdownNow();
     }
 
+    /**
+     * Waits for the termination of the executorService or forcefully shuts it down.
+     * If the executorService does not terminate within THREAD_WAIT_SECONDS, it will be forcefully shut down.
+     * If the executorService is still not terminated after being shut down, a warning message will be logged.
+     * If the thread is interrupted while waiting for termination, the executorService is forcefully shut down and the thread's interrupt status is set.
+     */
     private void awaitThreadPoolTerminationOrShutdownNow() {
         try {
             if (!executorService.awaitTermination(THREAD_WAIT_SECONDS, TimeUnit.SECONDS)) {
@@ -75,6 +90,14 @@ public class ProcessingService {
         }
     }
 
+    /**
+     * Stores the fetched content and returns it as a CompletableFuture.
+     *
+     * @param fetchedContentFuture the CompletableFuture containing the fetched content
+     * @param url                  the URL from which the content was fetched
+     * @return a CompletableFuture that completes successfully with the fetched content,
+     *         or null if an error occurred
+     */
     public CompletableFuture<String> storeContent(CompletableFuture<String> fetchedContentFuture, String url) {
         return fetchedContentFuture.thenApply(respContent -> {
             this.contents.add(respContent);
@@ -87,16 +110,34 @@ public class ProcessingService {
         });
     }
 
+    /**
+     * Handles a matching exception by logging the error message and returning null.
+     *
+     * @param ex the matching exception
+     * @return null
+     */
     private String handleMatchingException(Throwable ex) {
         logger.error("Exception occurred while matching content: " + ex.getMessage());
         return null;
     }
 
+    /**
+     * Handles and logs any exception occurred while storing content.
+     *
+     * @param ex the exception that occurred while storing content
+     * @return null
+     */
     private Void handleStoringException(Throwable ex) {
         logger.error("Exception occurred while storing content: " + ex.getMessage());
         return null;
     }
 
+    /**
+     * Validates a list of URLs.
+     *
+     * @param urls the list of URLs to validate
+     * @throws IllegalArgumentException if any URL is null or empty
+     */
     private void validateUrls(List<String> urls) {
         for (String url : urls) {
             if (url == null || url.isEmpty()) {

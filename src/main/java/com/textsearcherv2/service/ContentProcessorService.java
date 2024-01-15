@@ -14,6 +14,7 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static com.textsearcherv2.controller.ControllerConstants.CORES;
@@ -28,38 +29,34 @@ public class ContentProcessorService {
     private static final Logger logger = LogManager.getLogger(MatcherService.class);
 
     @Autowired
-    final MatcherService matcherService; // Assuming
+    final MatcherService matcherService;
     // Executor Service for processing chunks
     private ExecutorService matcherExecutor = Executors.newFixedThreadPool(CORES); // adjust the thr
 
 
+    /**
+     * Process the content in chunks.
+     *
+     * @param content The content to be processed.
+     * @return A CompletableFuture that completes with a list of strings representing the processed content.
+     */
     public CompletableFuture<List<String>> processContentInChunksStep(String content) {
         logger.info("in process content to chunk stage: content size {}", content.length());
         return processContentInChunks(content, CHUNK_SIZE_LIMIT);
     }
 
-//    private CompletableFuture<List<String>> processContentInChunks(String contentPart, int chunkSize) {
-//        List<CompletableFuture<String>> futures = new ArrayList<>();
-//        Collection<List<String>> chunks = createChunks(contentPart, chunkSize);
-//        for (List<String> chunkLines : chunks) {
-//            String joinedChunkLines = String.join(LINE_DELIMITER, chunkLines);
-//            CompletableFuture<String> future = matcherService.match(joinedChunkLines, matcherExecutor)
-//                    .thenApply(this::processResult)
-//                    .exceptionally(this::logException);
-//            futures.add(future);
-//        }
-//        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-//                .thenApply(v -> futures.stream()
-//                        .map(CompletableFuture::join)
-//                        .collect(Collectors.toList()));
-//    }
-
     private String logException(Throwable throwable) {
-//        LOGGER.log(Level.SEVERE, "Exception occurred during content processing", throwable);
-        return null; // Returning null or a default value as per your error handling strategy
+        logger.info("Exception occurred during content processing", throwable);
+        return null; // Returning null as an error signal
     }
 
-
+    /**
+     * Creates chunks of lines from the given content part
+     *
+     * @param contentPart The content part to create chunks from
+     * @param chunkSize   The size of each chunk
+     * @return A collection of lists of strings representing the chunks
+     */
     private Collection<List<String>> createChunks(String contentPart, int chunkSize) {
         BufferedReader reader = new BufferedReader(new StringReader(contentPart));
         AtomicInteger counter = new AtomicInteger();
@@ -68,6 +65,12 @@ public class ContentProcessorService {
                 .values();
     }
 
+    /**
+     * Process the result list.
+     *
+     * @param resultList The list to be processed.
+     * @return A string representing the processed result.
+     */
     private String processResult(List<?> resultList) {
         logger.info("in process result stage: {}", resultList);
         if (resultList == null || resultList.isEmpty()) {
@@ -84,13 +87,25 @@ public class ContentProcessorService {
         return ""; // Default return, in case of unexpected data types
     }
 
-
-        private CompletableFuture<List<String>> processContentInChunks(String contentPart, int chunkSize) {
+    /**
+     * Processes the content in chunks.
+     *
+     * @param contentPart The content part to be processed.
+     * @param chunkSize The size of each chunk.
+     * @return A CompletableFuture that completes with a list of strings representing the processed content.
+     */
+    private CompletableFuture<List<String>> processContentInChunks(String contentPart, int chunkSize) {
         Collection<List<String>> chunks = createChunks(contentPart, chunkSize);
         List<CompletableFuture<String>> futures = processChunks(chunks);
         return combineFutures(futures);
     }
 
+    /**
+     * Processes the given chunks of content asynchronously.
+     *
+     * @param chunks The collection of lists of strings representing the chunks of content.
+     * @return A list of CompletableFutures, each representing the processing result for a chunk of content.
+     */
     private List<CompletableFuture<String>> processChunks(Collection<List<String>> chunks) {
         List<CompletableFuture<String>> futures = new ArrayList<>();
         for (List<String> chunkLines : chunks) {
@@ -103,6 +118,12 @@ public class ContentProcessorService {
         return futures;
     }
 
+    /**
+     * Combines a list of CompletableFutures into a single CompletableFuture that completes with a list of strings.
+     *
+     * @param futures The list of CompletableFutures representing the processing result for each chunk.
+     * @return A CompletableFuture that completes with a list of strings representing the combined processing results.
+     */
     private CompletableFuture<List<String>> combineFutures(List<CompletableFuture<String>> futures) {
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                 .thenApply(v -> futures.stream()

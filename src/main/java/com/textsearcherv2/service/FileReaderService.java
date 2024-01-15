@@ -92,7 +92,8 @@ public class FileReaderService {
         // Chain all steps
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(extractBody) // Extract body from the response
-                .thenCompose(contentChunk -> contentProcessorService.processContentInChunksStep(contentChunk)) // Map Stage: Process content in chunks
+                .thenCompose(contentChunk -> contentProcessorService.processContentInChunksStep(
+                        contentChunk)) // Map Stage: Process content in chunks
                 .thenApply(this::transformListToMap) // Convert List to Map if needed
                 .thenCompose(aggregatorService::aggregateAndPrintResults) // Reduce Stage: Aggregate the processed content
                 .thenAcceptAsync(result -> {
@@ -101,6 +102,7 @@ public class FileReaderService {
                 .exceptionally(exceptionHandler);
 
     }
+
     private AtomicInteger charOffsetSum = new AtomicInteger(0);
 
     private Map<String, List<TextPosition>> transformListToMap(List<String> contentList) {
@@ -132,6 +134,13 @@ public class FileReaderService {
 
         return namePositions;
     }
+
+    /**
+     * Parses a string into a TextPosition object.
+     *
+     * @param positionData the string representing the position data in the format "lineNumber, columnNumber"
+     * @return the TextPosition object representing the parsed position data
+     */
     // Parse a string into a TextPosition object
     public static TextPosition parseTextPosition(String positionData) {
         try {
@@ -148,6 +157,12 @@ public class FileReaderService {
         return null;
     }
 
+    /**
+     * Processes the given result list and returns a string representation of the matched contents.
+     *
+     * @param resultList The list of results to process. It should be of type List<String>.
+     * @return A string representation of the matched contents. Returns null if the result list is not of type List<String>.
+     */
     private String processResult(List<?> resultList) {
         if (resultList instanceof List) {
             List<String> matchedContents = (List<String>) resultList;
@@ -166,6 +181,13 @@ public class FileReaderService {
     }
 
 
+    /**
+     * Splits the given content into chunks of the specified size.
+     *
+     * @param contentPart the content to be split into chunks
+     * @param chunkSize   the number of lines in each chunk
+     * @return a collection of lists, each containing a chunk of lines from the content
+     */
     private Collection<List<String>> createChunks(String contentPart, int chunkSize) {
         BufferedReader reader = new BufferedReader(new StringReader(contentPart));
         AtomicInteger counter = new AtomicInteger();
@@ -183,6 +205,13 @@ public class FileReaderService {
             return null;
         });
     }
+
+    /**
+     * Fetches and processes content for a single URL.
+     *
+     * @param fileURL the URL of the file to fetch and process
+     * @return a CompletableFuture representing the processing result
+     */
     // Fetches and processes content for a single URL
     private CompletableFuture<String> fetchContentAndProcessSingleWorker(String fileURL) {
         // Implement fetching and processing logic here
@@ -191,6 +220,12 @@ public class FileReaderService {
         return CompletableFuture.completedFuture("processedData");
     }
 
+    /**
+     * Applies additional processing to the given data.
+     *
+     * @param processData the data to be processed
+     * @return a CompletableFuture representing the asynchronous operation that completes when the processing is finished
+     */
     // Applies additional processing to the data
     private CompletableFuture<Void> applyWorkers(String processData) {
         // Implement additional processing logic here
@@ -199,11 +234,26 @@ public class FileReaderService {
         return CompletableFuture.runAsync(() -> System.out.println("Data: " + processData));
     }
 
+    /**
+     * Chains fetching and processing for a single URL.
+     *
+     * @param fileURL The URL of the file to fetch and process.
+     * @return A CompletableFuture that completes when the fetch and apply process is finished.
+     */
     // Chains fetching and processing for a single URL
     private CompletableFuture<Void> fetchAndApplyProcess(String fileURL) {
         return this.fetchContentAndProcessSingleWorker(fileURL).thenCompose(this::applyWorkers);
     }
 
+    /**
+     * Retrieves the list of CompletableFuture objects that represent the asynchronous completion of
+     * fetching and processing content from multiple URLs.
+     *
+     * @param fileURLs The list of URLs to fetch content from
+     * @param linePerPart The number of lines per part to divide the fetched content into
+     * @return A list of CompletableFuture objects that represent the asynchronous completion of
+     *         fetching and processing content from the given URLs
+     */
     // Processes multiple URLs
     public List<CompletableFuture<Void>> getFutureListFromUrl(final List<String> fileURLs, int linePerPart) {
         CHUNK_SIZE_LIMIT = linePerPart;
@@ -216,48 +266,17 @@ public class FileReaderService {
         return allFutures;
     }
 
+    /**
+     * Returns a list of CompletableFuture objects for the given list of file URLs.
+     * Each CompletableFuture represents a task that processes a URL and returns void.
+     * The default number of lines to process per URL is 100.
+     *
+     * @param fileURLs a list of Strings representing the file URLs to process
+     * @return a list of CompletableFuture objects representing the tasks to process the URLs
+     */
     // Default method to process URLs with a standard line per part
     public List<CompletableFuture<Void>> getFutureListFromUrl(final List<String> fileURLs) {
-        return getFutureListFromUrl(fileURLs, 100); // default line per part
+        return getFutureListFromUrl(fileURLs, CHUNK_SIZE_LIMIT); // default line per part
     }
-
-//    private CompletableFuture<String> fetchContentAndProcessSingleWorker(String fileURL) {
-//        // Your existing logic
-//        return CompletableFuture.completedFuture("processedData");
-//    }
-//
-//    private CompletableFuture<Void> applyWorkers(String processData) {
-//        // Your existing logic
-//        return CompletableFuture.runAsync(() -> System.out.println("Data: " + processData));
-//    }
-//
-//    private CompletableFuture<Void> fetchAndApplyProcess(String fileURL) {
-//        return this.fetchContentAndProcessSingleWorker(fileURL).thenCompose(this::applyWorkers);
-//    }
-//
-//
-//
-//    private List<CompletableFuture<Void>> createFuturesForParts(List<String> parts) {
-//        return parts.stream()
-//                .map(part -> CompletableFuture.runAsync(matcherService.createMatchTask(part, matcherExecutor), matcherExecutor))
-//                .collect(Collectors.toList());
-//    }
-//
-//    List<CompletableFuture<Void>> getFutureListFromUrl(final List<String> fileURLs) {
-//        return getFutureListFromUrl(fileURLs, 100); // default line per part
-//    }
-//
-//    List<CompletableFuture<Void>> getFutureListFromUrl(final List<String> fileURLs, int linePerPart) {
-//        CHUNK_SIZE_LIMIT = linePerPart;
-//        List<CompletableFuture<Void>> allFutures = new ArrayList<>();
-//
-//        for (String fileURL : fileURLs) {
-//            CompletableFuture<Void> future = this.fetchAndApplyProcess(fileURL);
-//            allFutures.add(future);
-//        }
-//        return allFutures;
-//    }
-
-
 }
 

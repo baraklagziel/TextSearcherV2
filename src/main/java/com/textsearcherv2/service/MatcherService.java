@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -25,18 +26,26 @@ public class MatcherService {
     public MatcherService(@Lazy AggregatorService aggregatorService) {
         this.aggregatorService = aggregatorService;
     }
+
     public static final Set<String> PERSON_NAMES = new HashSet<>(Arrays.asList(
-            "James","John","Robert","Michael","William","David","Richard","Charles","Joseph","Thomas","Christopher",
-            "Daniel","Paul","Mark","Donald","George","Kenneth","Steven","Edward","Brian","Ronald","Anthony","Kevin",
-            "Jason","Matthew","Gary","Timothy","Jose","Larry","Jeffrey","Frank","Scott","Eric","Stephen","Andrew",
-            "Raymond","Gregory","Joshua","Jerry","Dennis","Walter","Patrick","Peter","Harold","Douglas","Henry",
-            "Carl","Arthur","Ryan","Roger"
+            "James", "John", "Robert", "Michael", "William", "David", "Richard", "Charles", "Joseph", "Thomas", "Christopher",
+            "Daniel", "Paul", "Mark", "Donald", "George", "Kenneth", "Steven", "Edward", "Brian", "Ronald", "Anthony", "Kevin",
+            "Jason", "Matthew", "Gary", "Timothy", "Jose", "Larry", "Jeffrey", "Frank", "Scott", "Eric", "Stephen", "Andrew",
+            "Raymond", "Gregory", "Joshua", "Jerry", "Dennis", "Walter", "Patrick", "Peter", "Harold", "Douglas", "Henry",
+            "Carl", "Arthur", "Ryan", "Roger"
     ));
     private static final Logger logger = LogManager.getLogger(MatcherService.class);
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(CORES); // create a thread pool with a fixed number of threads
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(CORES);
+            // create a thread pool with a fixed number of threads
 
 
-
+    /**
+     * Matches the given content against a matcher and returns a list of matched strings asynchronously.
+     *
+     * @param content          the content to be matched
+     * @param matcherExecutor  the executor service to use for matching asynchronously
+     * @return a CompletableFuture containing a list of matched strings
+     */
     public CompletableFuture<List<String>> match(String content, final ExecutorService matcherExecutor) {
         List<CompletableFuture<List<String>>> futures = new ArrayList<>();
 
@@ -54,7 +63,15 @@ public class MatcherService {
                         .collect(Collectors.toList()));
     }
 
-    private CompletableFuture<List<String>> joinFutureContentMap(ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>> contentMap) {
+    /**
+     * Joins the content from a ConcurrentHashMap of ConcurrentLinkedQueues into a single CompletableFuture,
+     * which resolves to a List of Strings.
+     *
+     * @param contentMap the ConcurrentHashMap containing the content to be joined
+     * @return a CompletableFuture that will eventually resolve to a List of Strings, containing the joined content
+     */
+    private CompletableFuture<List<String>> joinFutureContentMap(
+            ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>> contentMap) {
         return CompletableFuture.supplyAsync(() -> {
             List<String> result = new ArrayList<>();
             contentMap.forEach((name, positionsQueue) -> {
@@ -67,9 +84,17 @@ public class MatcherService {
     }
 
 
-    private Optional<List<String>> joinFutureContentMap(CompletableFuture<ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>>> futureContentMap) {
+    /**
+     * Joins the content of a future content map.
+     *
+     * @param futureContentMap The CompletableFuture representing the future content map.
+     * @return Optional list of joined content strings.
+     */
+    private Optional<List<String>> joinFutureContentMap(
+            CompletableFuture<ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>>> futureContentMap) {
         try {
-            ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>> contentMap = futureContentMap.get(); // Blocks and waits for the future to complete
+            ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>> contentMap =
+                    futureContentMap.get(); // Blocks and waits for the future to complete
             List<String> result = new ArrayList<>();
             contentMap.forEach((key, value) -> {
                 // Process the map and add to result as needed
@@ -83,28 +108,35 @@ public class MatcherService {
         }
     }
 
-     CompletableFuture<ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>>> getContentMap(String content) {
-         return CompletableFuture.supplyAsync(() -> {
-             ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>> contentMap = new ConcurrentHashMap<>();
+    CompletableFuture<ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>>> getContentMap(String content) {
+        return CompletableFuture.supplyAsync(() -> {
+            ConcurrentHashMap<String, ConcurrentLinkedQueue<TextPosition>> contentMap = new ConcurrentHashMap<>();
 
-             String[] lines = content.split("\n");
-             for (int lineNumber = 0; lineNumber < lines.length; lineNumber++) {
-                 String line = lines[lineNumber];
-                 for (String name : PERSON_NAMES) {
-                     int charIndex = line.indexOf(name);
-                     while (charIndex >= 0) {
-                         ConcurrentLinkedQueue<TextPosition> positions = contentMap.computeIfAbsent(name, k -> new ConcurrentLinkedQueue<>());
-                         positions.add(new TextPosition(lineNumber, charIndex));
-                         // Search for the next occurrence of the name in the line
-                         charIndex = line.indexOf(name, charIndex + 1);
-                     }
-                 }
-             }
-             return contentMap;
-         }, executorService);
+            String[] lines = content.split("\n");
+            for (int lineNumber = 0; lineNumber < lines.length; lineNumber++) {
+                String line = lines[lineNumber];
+                for (String name : PERSON_NAMES) {
+                    int charIndex = line.indexOf(name);
+                    while (charIndex >= 0) {
+                        ConcurrentLinkedQueue<TextPosition> positions =
+                                contentMap.computeIfAbsent(name, k -> new ConcurrentLinkedQueue<>());
+                        positions.add(new TextPosition(lineNumber, charIndex));
+                        // Search for the next occurrence of the name in the line
+                        charIndex = line.indexOf(name, charIndex + 1);
+                    }
+                }
+            }
+            return contentMap;
+        }, executorService);
     }
 
 
+    /**
+     * Parses the given content into a map of name positions.
+     *
+     * @param content the content to parse
+     * @return a map of name positions
+     */
     private Map<String, List<TextPosition>> getPositionsMap(String content) {
 
         Map<String, List<TextPosition>> namePositionsMap = new HashMap<>();
@@ -139,7 +171,13 @@ public class MatcherService {
     }
 
 
-
+    /**
+     * Creates a Match Task which asynchronously matches the given content using the provided executor service.
+     *
+     * @param content           The content to be matched.
+     * @param matcherExecutor   The executor service to be used for matching.
+     * @return A Runnable representing the match task.
+     */
     // Method to create Match Task
     Runnable createMatchTask(String content, final ExecutorService matcherExecutor) {
 

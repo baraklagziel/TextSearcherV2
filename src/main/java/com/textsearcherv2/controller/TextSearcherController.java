@@ -42,7 +42,7 @@ public class TextSearcherController {
         logger.info("Received request to process URLs: {}", urls);
         processingService.start(urls, 1000);
         logger.info("Processing of URLs started");
-        return ResponseEntity.ok("Processing started");
+        return ResponseEntity.ok("Processing Finished");
     }
 
 
