@@ -36,6 +36,7 @@ import static com.textsearcherv2.service.MatcherService.PERSON_NAMES;
 public class FileReaderService {
     public static int CHUNK_SIZE_LIMIT;
     private String content;
+    private AtomicInteger charOffsetSum = new AtomicInteger(0);
 
     private final AtomicInteger CHAR_OFFSET_SUM = new AtomicInteger(0);
 
@@ -103,7 +104,6 @@ public class FileReaderService {
 
     }
 
-    private AtomicInteger charOffsetSum = new AtomicInteger(0);
 
     private Map<String, List<TextPosition>> transformListToMap(List<String> contentList) {
         Map<String, List<TextPosition>> namePositions = new HashMap<>();
