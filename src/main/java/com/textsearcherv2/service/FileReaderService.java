@@ -1,6 +1,7 @@
 package com.textsearcherv2.service;
 
 import com.textsearcherv2.model.TextPosition;
+import com.textsearcherv2.exception.InvalidFileException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,12 +22,10 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import static com.textsearcherv2.controller.ControllerConstants.CORES;
-import static com.textsearcherv2.service.MatcherService.PERSON_NAMES;
+import static com.textsearcherv2.service.ServiceConstants.PERSON_NAMES;
 
 @Service
 @NoArgsConstructor(force = true)
@@ -74,7 +73,7 @@ public class FileReaderService {
             logger.warn("Invalid or unsafe URL provided: {}", url);
             CompletableFuture<Void> failedFuture = new CompletableFuture<>();
             failedFuture.completeExceptionally(new IllegalArgumentException("Invalid or unsafe URL"));
-            return failedFuture;
+            throw new InvalidFileException("Invalid or unsafe URL");
         }
 
         HttpClient client = HttpClient.newHttpClient();

@@ -18,14 +18,15 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static com.textsearcherv2.controller.ControllerConstants.CORES;
+import static com.textsearcherv2.service.FileReaderService.CHUNK_SIZE_LIMIT;
+import static com.textsearcherv2.service.ServiceConstants.LINE_DELIMITER;
 
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
 @Data
 @Service
 public class ContentProcessorService {
-    private static final int CHUNK_SIZE_LIMIT = 1000; // Specify Chunk Size
-    private static final String LINE_DELIMITER = "\n";
+
     private static final Logger logger = LogManager.getLogger(MatcherService.class);
 
     @Autowired

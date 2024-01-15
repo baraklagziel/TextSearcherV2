@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.textsearcherv2.controller.ControllerConstants.PROCESS_URL;
-import static com.textsearcherv2.controller.ControllerConstants.V1;
+import static com.textsearcherv2.controller.ControllerConstants.*;
 
 @RestController
 @RequestMapping(value = V1)
@@ -40,10 +39,8 @@ public class TextSearcherController {
     @PostMapping(value = PROCESS_URL)
     public ResponseEntity<String> processUrls(@RequestBody List<String> urls) {
         logger.info("Received request to process URLs: {}", urls);
-        processingService.start(urls, 1000);
+        processingService.start(urls, CHUNK_SIZE_LIMIT);
         logger.info("Processing of URLs started");
         return ResponseEntity.ok("Processing Finished");
     }
-
-
 }

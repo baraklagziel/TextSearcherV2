@@ -33,3 +33,34 @@ The application will be composed of the following key modules:
 
 ## Output Example
 An example output line from the program, based on the input
+
+## Running with Docker
+
+You can run this Spring Boot application in a Docker container. Follow these steps:
+
+1. Build the Docker image:
+
+   ```bash
+   docker build -t TextSearcherV2 -f src/Dockerfile . --no-cache
+2. ```bash 
+   docker run -p 9093:8080 TextSearcherV2
+3. ```bash
+   docker stop $(docker ps -q --filter ancestor=TextSearcherV2)
+
+- **Note: Make sure you have Docker installed on your machine to run the application using Docker.**
+
+Feel free to customize the instructions to fit your project's specific needs.
+# TextSearcher API
+
+The TextSearcher API provides a set of endpoints for creating, retrieving, and deleting names, especially focusing on auto-completion functionalities. This document outlines the available endpoints and their usage.
+
+## API Endpoints
+
+
+## Contributing
+
+Contributions to the TextSearcherV2 Service are welcome. Please follow these steps to contribute:
+
+1. Fork the repository and create your branch from `master`.
+2. Make your changes and test them thoroughly.
+3. Submit a pull request with a comprehensive description of changes.

@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.textsearcherv2.service.MatcherService.PERSON_NAMES;
+import static com.textsearcherv2.service.ServiceConstants.PERSON_NAMES;
 
 @Service
 @Log4j2

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import com.textsearcherv2.model.TextPosition;
 
 import static com.textsearcherv2.controller.ControllerConstants.CORES;
+import static com.textsearcherv2.service.ServiceConstants.PERSON_NAMES;
 
 
 @Service
@@ -27,13 +28,6 @@ public class MatcherService {
         this.aggregatorService = aggregatorService;
     }
 
-    public static final Set<String> PERSON_NAMES = new HashSet<>(Arrays.asList(
-            "James", "John", "Robert", "Michael", "William", "David", "Richard", "Charles", "Joseph", "Thomas", "Christopher",
-            "Daniel", "Paul", "Mark", "Donald", "George", "Kenneth", "Steven", "Edward", "Brian", "Ronald", "Anthony", "Kevin",
-            "Jason", "Matthew", "Gary", "Timothy", "Jose", "Larry", "Jeffrey", "Frank", "Scott", "Eric", "Stephen", "Andrew",
-            "Raymond", "Gregory", "Joshua", "Jerry", "Dennis", "Walter", "Patrick", "Peter", "Harold", "Douglas", "Henry",
-            "Carl", "Arthur", "Ryan", "Roger"
-    ));
     private static final Logger logger = LogManager.getLogger(MatcherService.class);
     private static final ExecutorService executorService = Executors.newFixedThreadPool(CORES);
             // create a thread pool with a fixed number of threads

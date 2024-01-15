@@ -14,12 +14,12 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import static com.textsearcherv2.controller.ControllerConstants.CORES;
+import static com.textsearcherv2.service.ServiceConstants.THREAD_WAIT_SECONDS;
 
 @Service
 @AllArgsConstructor
 @Log4j2
 public class ProcessingService {
-    private static final long THREAD_WAIT_SECONDS = 60;
     private List<String> contents = new ArrayList<>();
     private static final Logger logger = LogManager.getLogger(ProcessingService.class);
     private ExecutorService executorService;

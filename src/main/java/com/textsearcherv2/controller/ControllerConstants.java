@@ -4,6 +4,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class ControllerConstants {
+    public static final int CHUNK_SIZE_LIMIT = 1000; // Specify Chunk Size
 
     public static final String V1 = "/v1";
     public static final String PROCESS_URL = "/process-url";
