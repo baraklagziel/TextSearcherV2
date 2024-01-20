@@ -52,7 +52,7 @@ You can run this Spring Boot application in a Docker container. Follow these ste
 Feel free to customize the instructions to fit your project's specific needs.
 # TextSearcher API
 
-The TextSearcher API provides a set of endpoints for creating, retrieving, and deleting names, especially focusing on auto-completion functionalities. This document outlines the available endpoints and their usage.
+The TextSearcher API provides a set of endpoints for retrieving the most off of a set of names, of identifying the occurrence of predetermined strings within a large text file. This document outlines the available endpoints and their usage.
 
 ## API Endpoints
 
